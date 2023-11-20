@@ -34,9 +34,12 @@
 /** @file
  *
  */
-#pragma once
+#ifndef CODEC_ADPCM_H__
+#define CODEC_ADPCM_H__
 
 #include "wiced_bt_types.h"
 #include "adpcm_codec.h"
 
 void decode(CodecState* state, UINT8* input, int numSamples, INT16* output);
+
+#endif // CODEC_ADPCM_H__

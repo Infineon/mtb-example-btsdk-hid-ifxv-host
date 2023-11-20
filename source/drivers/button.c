@@ -37,24 +37,33 @@
  *
  */
 
-#ifdef WICED_EVAL
 #include "app.h"
 #include "cycfg_pins.h"
 #include "wiced_bt_trace.h"
 
 #define BUTTON_TIMER_TICK               1
-#define BUTTON_HOLDING_TIME_FOR_PAIRING 5
+#define BUTTON_HOLDING_TIME_FOR_ERASE   5
+#define USER_BUTTON                     WICED_PLATFORM_BUTTON_4
 
 static wiced_timer_t button_timer;
-static button_timer_cnt = 0;
+static int button_timer_cnt = 0;
 
 static void button_timer_handler( TIMER_PARAM_TYPE arg )
 {
-    if (++button_timer_cnt > BUTTON_HOLDING_TIME_FOR_PAIRING)
+    if (++button_timer_cnt >= BUTTON_HOLDING_TIME_FOR_ERASE)
     {
-        WICED_BT_TRACE("Enter pairing\n");
         wiced_stop_timer(&button_timer);
+        if (ifxv_conn_id())
+        {
+            wiced_bt_gatt_disconnect(ifxv_conn_id());
+        }
+        WICED_BT_TRACE("Erase bonding\n");
+        app_erase_bonding();
         app_enter_pairing();
+    }
+    else
+    {
+        WICED_BT_TRACE("%d\n", button_timer_cnt);
     }
 }
 
@@ -62,12 +71,17 @@ static void button_interrupt_handler( void *user_data, uint8_t value )
 {
     int down = button_down();
 
-    WICED_BT_TRACE("User button %s\n", down ? "down" : "up");
-
     if (down)
     {
-        if (!wiced_is_timer_in_use(&button_timer))
+        if (ifxv_conn_id())
         {
+            wiced_stop_timer(&button_timer);
+            WICED_BT_TRACE("User button start audio\n");
+            audio_start_req(audio_get_cfg());
+        }
+        else
+        {
+            WICED_BT_TRACE( "Hold Button 5 sec to erase pairing\n" );
             button_timer_cnt = 0;
             wiced_start_timer(&button_timer,BUTTON_TIMER_TICK);
         }
@@ -75,23 +89,26 @@ static void button_interrupt_handler( void *user_data, uint8_t value )
     else
     {
         wiced_stop_timer(&button_timer);
-        switch (button_timer_cnt) {
-        case 0:
-            // play audio
-            break;
+        if (ifxv_conn_id())
+        {
+            WICED_BT_TRACE("Stop audio\n");
+            audio_stop_req(IFX_AUDIO_STOP_REASON_USER_REQUEST);
+        }
+        else
+        {
+            WICED_BT_TRACE( "Button released\n" );
         }
     }
 }
 
 wiced_bool_t button_down()
 {
-    return wiced_hal_gpio_get_pin_input_status( WICED_GET_PIN_FOR_BUTTON(WICED_PLATFORM_BUTTON_1) ) == wiced_platform_get_button_pressed_value(WICED_PLATFORM_BUTTON_1);
+    return wiced_hal_gpio_get_pin_input_status( WICED_GET_PIN_FOR_BUTTON(USER_BUTTON) ) == wiced_platform_get_button_pressed_value(USER_BUTTON);
 }
 
 void button_init()
 {
-    wiced_platform_register_button_callback( WICED_PLATFORM_BUTTON_1, button_interrupt_handler, NULL, WICED_PLATFORM_BUTTON_BOTH_EDGE);
+    wiced_platform_register_button_callback( USER_BUTTON, button_interrupt_handler, NULL, WICED_PLATFORM_BUTTON_BOTH_EDGE);
     wiced_init_timer(&button_timer, button_timer_handler, 0, WICED_SECONDS_PERIODIC_TIMER);
 }
 
-#endif // WICED_EVAL

@@ -37,7 +37,8 @@
  * This file is for backward compatiblity
  *
  */
-#pragma once
+#ifndef IFXV_CLIENT_H__
+#define IFXV_CLIENT_H__
 
 #include "discovery.h"
 
@@ -104,6 +105,7 @@ typedef void (ifxv_callback_t)(ifxv_event_t event, ifxv_event_data_t * p_data);
  *                  Function prototyping
  ******************************************************/
 
+#define ifxv_link_is_up() ifxv_conn_id()
 uint16_t ifxv_conn_id();
 uint8_t * ifxv_peer_addr();
 uint8_t ifxv_peer_transport();
@@ -116,3 +118,5 @@ void ifxv_client_link_down(wiced_bt_gatt_connection_status_t * p_conn_status);
 void ifxv_client_read_response(wiced_bt_gatt_operation_complete_t * p_data);
 void ifxv_client_notification(wiced_bt_gatt_operation_complete_t * p_data);
 void ifxv_client_indication(wiced_bt_gatt_operation_complete_t * p_data);
+
+#endif // IFXV_CLIENT_H__

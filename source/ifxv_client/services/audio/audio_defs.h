@@ -33,7 +33,8 @@
 
 /** @file
  */
-#pragma once
+#ifndef AUDIO_DEFS_H__
+#define AUDIO_DEFS_H__
 
 #include "wiced_bt_types.h"
 
@@ -117,3 +118,5 @@ typedef struct
     uint16_t        len;
 } audio_cfg_t;
 #pragma pack()
+
+#endif // AUDIO_DEFS_H__

@@ -66,6 +66,9 @@
 #define LED_SCAN_BLINK_SPEED    500
 #define TRANS_UART_BUFFER_SIZE  1024
 
+#define is_same_addr(a, b) !memcmp(a, b, BD_ADDR_LEN)
+#define is_null_addr(a) is_same_addr(a, null_addr)
+
 /******************************************************************************
  *   External Definitions
  ******************************************************************************/
@@ -73,6 +76,7 @@
 /******************************************************************************
  *   Data
  ******************************************************************************/
+static wiced_bt_device_address_t null_addr = {0};
 
 const wiced_transport_cfg_t transport_cfg =
 {
@@ -149,7 +153,7 @@ static void app_callback(ifxv_event_t event, ifxv_event_data_t *p_data)
  */
 static wiced_bt_gatt_status_t app_connection_up( wiced_bt_gatt_connection_status_t *p_status )
 {
-    WICED_BT_TRACE( "Link up, Conn Id:%d Addr: < %B>\n", p_status->conn_id, p_status->bd_addr);
+    WICED_BT_TRACE( "Link up, Conn Id:%d Addr: < %B> type:%d\n", p_status->conn_id, p_status->bd_addr, p_status->addr_type);
 
     led_on(LINK_LED);
 
@@ -159,12 +163,45 @@ static wiced_bt_gatt_status_t app_connection_up( wiced_bt_gatt_connection_status
     return WICED_BT_GATT_SUCCESS;
 }
 
+char * disconnect_reason_str(wiced_bt_gatt_disconn_reason_t reason)
+{
+    switch (reason)
+    {
+    case GATT_CONN_UNKNOWN:
+        return "";
+
+    case GATT_CONN_L2C_FAILURE:
+        return "General L2cap failure";
+
+    case GATT_CONN_TIMEOUT:
+        return "Connection timeout";
+
+    case GATT_CONN_TERMINATE_PEER_USER:
+        return "Connection terminated by peer user";
+
+    case GATT_CONN_TERMINATE_LOCAL_HOST:
+        return "Connection terminated by local host";
+
+    case GATT_CONN_FAIL_ESTABLISH:
+        return "Connection fail to establish";
+
+    case GATT_CONN_LMP_TIMEOUT:
+        return "Connection fail due to LMP response tout";
+
+    case GATT_CONN_CANCEL:
+        return "L2CAP connection cancelled";
+
+    default:
+        return "Unknown";
+    }
+}
+
 /*
  * Link down
  */
 static wiced_bt_gatt_status_t app_connection_down( wiced_bt_gatt_connection_status_t *p_status )
 {
-    WICED_BT_TRACE("Link down, reason %d (0x%02x)\n", p_status->reason, p_status->reason);
+    WICED_BT_TRACE("Link down, reason %d (0x%02x) %s\n", p_status->reason, p_status->reason, disconnect_reason_str(p_status->reason));
 
     led_off(LINK_LED);
 
@@ -191,10 +228,45 @@ static void app_load_keys_to_addr_resolution_db()
         // if failed to read NVRAM, there is nothing saved at that location
         if ((result == WICED_SUCCESS) && (bytes_read == sizeof(wiced_bt_device_link_keys_t)))
         {
-            IFXV_APP_TRACE("[%s] Added to address resolution database\n");
-            result = wiced_bt_dev_add_device_to_address_resolution_db(&keys);
+            if (!is_null_addr(keys.bd_addr))
+            {
+                if (keys.key_data.ble_addr_type != BLE_ADDR_PUBLIC)
+                {
+                    IFXV_APP_TRACE("[%s] Added to address resolution database\n");
+                    result = wiced_bt_dev_add_device_to_address_resolution_db(&keys);
+                }
+                wiced_bt_ble_update_background_connection_device(TRUE, keys.bd_addr);
+                wiced_bt_ble_set_background_connection_type(BTM_BLE_CONN_AUTO, NULL);
+            }
         }
-        else
+        else // NVRAM read failure --> no more link keys
+        {
+            break;
+        }
+    }
+}
+
+/*
+ * Load the address resolution database
+ */
+void app_erase_bonding()
+{
+    uint8_t                     bytes_read;
+    wiced_result_t              result;
+    wiced_bt_device_link_keys_t keys;
+    uint16_t                    i;
+
+    for ( i = APP_PAIRED_KEYS_START_VS_ID; i < WICED_NVRAM_VSID_END; i++ )
+    {
+        bytes_read = wiced_hal_read_nvram(i, sizeof(keys), (uint8_t *)&keys, &result);
+
+        // if failed to read NVRAM, there is nothing saved at that location
+        if ((result == WICED_SUCCESS) && (bytes_read == sizeof(wiced_bt_device_link_keys_t)))
+        {
+            memset(&keys, 0, sizeof(wiced_bt_device_link_keys_t));
+            wiced_hal_write_nvram(i, sizeof(wiced_bt_device_link_keys_t), (uint8_t *)&keys, &result);
+        }
+        else // NVRAM read failure --> no more link keys
         {
             break;
         }
@@ -218,7 +290,7 @@ wiced_bool_t app_is_device_bonded(wiced_bt_device_address_t bd_address)
         // if failed to read NVRAM, there is nothing saved at that location
         if ( result == WICED_SUCCESS )
         {
-            if ( memcmp( temp_keys.bd_addr, bd_address, BD_ADDR_LEN ) == 0 )
+            if ( is_same_addr( temp_keys.bd_addr, bd_address ) )
             {
                 IFXV_APP_TRACE2("[%s] return TRUE\n");
                 return WICED_TRUE;
@@ -238,25 +310,56 @@ wiced_bool_t app_is_device_bonded(wiced_bt_device_address_t bd_address)
  */
 static void app_scan_result_cback( wiced_bt_ble_scan_results_t *p_scan_result, uint8_t *p_adv_data )
 {
-    wiced_result_t          status;
     wiced_bool_t            ret_status;
     uint8_t                 length = 0;
     uint8_t *               p_data;
     uint8_t                 *device_voice = (uint8_t *) "IFX-Voice";
-    uint8_t                 *device_remote = (uint8_t *) "IFXV-Remote";
+    uint8_t                 *device_voice2 = (uint8_t *) "IFXV-Remote";
+    uint8_t                 *device_remote = (uint8_t *) "LE REMOTE";
     uint8_t                 *device_rcu = (uint8_t *) "LE RCU";
-    uint16_t                service_uuid16=0;
+    uint8_t                 found = FALSE;
 
     if ( p_scan_result )
     {
-        // Search for Device Name in the Advertisement data received.
-        p_data = wiced_bt_ble_check_advertising_data( p_adv_data, BTM_BLE_ADVERT_TYPE_NAME_COMPLETE, &length );
-        if ( p_data != NULL && (!memcmp(p_data, device_voice, strlen((char *) device_voice)) ||
-                                !memcmp(p_data, device_remote, strlen((char *) device_remote)) ||
-                                !memcmp(p_data, device_rcu, strlen((char *) device_rcu))))
-        {
-            WICED_BT_TRACE("Found the peer device %s, BD Addr: %B\n", p_data, p_scan_result->remote_bd_addr);
+        switch (p_scan_result->ble_evt_type) {
+        case BTM_BLE_EVT_CONNECTABLE_DIRECTED_ADVERTISEMENT:
+            IFXV_APP_TRACE("Direct Adv from: %B AddrType:%d\n", p_scan_result->remote_bd_addr, p_scan_result->ble_addr_type);
+            if (app_is_device_bonded(p_scan_result->remote_bd_addr))
+            {
+                IFXV_APP_TRACE("Reconnect from device %B\n", p_scan_result->remote_bd_addr);
+                found = TRUE;
+            }
+            break;
 
+        case BTM_BLE_EVT_CONNECTABLE_ADVERTISEMENT:
+            // Search for Device Name in the Advertisement data received.
+            p_data = wiced_bt_ble_check_advertising_data( p_adv_data, BTM_BLE_ADVERT_TYPE_NAME_COMPLETE, &length );
+            if (!p_data)
+            {
+                IFXV_APP_TRACE("Undirect Adv from %BAddrType:%d\n", p_scan_result->remote_bd_addr, p_scan_result->ble_addr_type);
+            }
+            else
+            {
+                p_data[length] = 0;
+                IFXV_APP_TRACE("Undirect Adv from %s %BAddrType:%d\n", (char *) p_data, p_scan_result->remote_bd_addr, p_scan_result->ble_addr_type);
+                if ( length && (!memcmp(p_data, device_voice, length) ||
+                                !memcmp(p_data, device_voice2, length) ||
+                                !memcmp(p_data, device_remote, length) ||
+                                !memcmp(p_data, device_rcu, length)))
+                {
+                    WICED_BT_TRACE("Found the peer device %s, BD Addr: %B\n", p_data, p_scan_result->remote_bd_addr);
+                    found = TRUE;
+                }
+            }
+            break;
+
+        default:
+            IFXV_APP_TRACE("Evt:%d, Addr: %B, AddrType:%d\n", p_scan_result->ble_evt_type, p_scan_result->remote_bd_addr, p_scan_result->ble_addr_type);
+            break;
+        }
+
+        if (found)
+        {
             led_blink_stop(LINK_LED);
 
             /* Device found. Stop scan. */
@@ -305,23 +408,25 @@ wiced_bool_t app_save_link_keys( wiced_bt_device_link_keys_t *p_keys )
         }
         else
         {
-            if ( memcmp( temp_keys.bd_addr, p_keys->bd_addr, BD_ADDR_LEN ) == 0 )
+            if ( is_same_addr(temp_keys.bd_addr, p_keys->bd_addr) || is_null_addr( temp_keys.bd_addr ) )
             {
-                // keys for this device have been saved, reuse the ID
+                // keys for this device have been saved or found an empty slot, reuse the location
                 id = i;
                 break;
             }
         }
     }
+
     if ( id == 0 )
     {
         // all NVRAM locations are already occupied.  Cann't save anything.
         WICED_BT_TRACE( "Failed to save NVRAM\n" );
         return WICED_FALSE;
     }
-    IFXV_APP_TRACE( "writing to id:%d\n", id );
+
     bytes_written = wiced_hal_write_nvram( id, sizeof( wiced_bt_device_link_keys_t ), (uint8_t *)p_keys, &result );
-    WICED_BT_TRACE( "Saved %d bytes at id:%d %d\n", bytes_written, id );
+    IFXV_APP_TRACE( "Saved %d bytes to NVRAM for id:%d\n", bytes_written, id );
+    UNUSED_VARIABLE(bytes_written);
     return WICED_TRUE;
 }
 
@@ -346,7 +451,7 @@ wiced_bool_t app_read_link_keys(wiced_bt_device_link_keys_t *p_keys)
         // if failed to read NVRAM, there is nothing saved at that location
         if ( result == WICED_SUCCESS )
         {
-            if ( memcmp( temp_keys.bd_addr, p_keys->bd_addr, BD_ADDR_LEN ) == 0 )
+            if (is_same_addr( temp_keys.bd_addr, p_keys->bd_addr ) )
             {
                 // keys for this device have been saved
                 memcpy( &p_keys->key_data, &temp_keys.key_data, sizeof( temp_keys.key_data ) );
@@ -366,20 +471,28 @@ wiced_bool_t app_read_link_keys(wiced_bt_device_link_keys_t *p_keys)
  */
 void app_enter_pairing()
 {
-    wiced_result_t result;
-
-    WICED_BT_TRACE("Searching for IFX-Voice device...\n" );
-    led_blink(LINK_LED, 0, LED_SCAN_BLINK_SPEED);
-    /*start scan if not connected and no scan in progress*/
-    if (!ifxv_is_connected() && (wiced_bt_ble_get_current_scan_state() == BTM_BLE_SCAN_TYPE_NONE))
+    if (!ifxv_link_is_up())
     {
-        result = wiced_bt_ble_scan( BTM_BLE_SCAN_TYPE_HIGH_DUTY, WICED_TRUE, app_scan_result_cback );
-        hci_send_status(result == WICED_BT_PENDING ? HCI_CONTROL_IFXV_STATUS_SCANNING : HCI_CONTROL_IFXV_STATUS_IDLE );
-        IFXV_APP_TRACE("wiced_bt_ble_scan: %d \n", result);
+        wiced_result_t result;
+
+        WICED_BT_TRACE("Searching for IFX-Voice device...\n" );
+        led_blink(LINK_LED, 0, LED_SCAN_BLINK_SPEED);
+
+        /*start scan if not connected and no scan in progress*/
+        if (!ifxv_is_connected() && (wiced_bt_ble_get_current_scan_state() == BTM_BLE_SCAN_TYPE_NONE))
+        {
+            result = wiced_bt_ble_scan( BTM_BLE_SCAN_TYPE_HIGH_DUTY, WICED_TRUE, app_scan_result_cback );
+            hci_send_status(result == WICED_BT_PENDING ? HCI_CONTROL_IFXV_STATUS_SCANNING : HCI_CONTROL_IFXV_STATUS_IDLE );
+            IFXV_APP_TRACE("wiced_bt_ble_scan result %d \n", result);
+        }
+        else
+        {
+             WICED_BT_TRACE("Scanning not initiated, scan in progress ??  \n");
+        }
     }
     else
     {
-         WICED_BT_TRACE("Scanning not initiated, scan in progress ??  \n");
+        IFXV_APP_TRACE("Link is already up\n");
     }
 }
 
@@ -412,7 +525,7 @@ void app_process_read_rsp(wiced_bt_gatt_operation_complete_t *p_data)
  */
 void app_indication_handler(wiced_bt_gatt_operation_complete_t *p_data)
 {
-    IFXV_APP_TRACE("indication handle:%04x\n", p_data->response_data.att_value.handle);
+    IFXV_APP_TRACE2("indication handle:%04x\n", p_data->response_data.att_value.handle);
 
     ifxv_client_indication(p_data);
 }
@@ -422,7 +535,7 @@ void app_indication_handler(wiced_bt_gatt_operation_complete_t *p_data)
  */
 void app_notification_handler(wiced_bt_gatt_operation_complete_t *p_data)
 {
-    IFXV_APP_TRACE("notification handle:%04x\n", p_data->response_data.att_value.handle);
+    IFXV_APP_TRACE2("notification handle:%04x\n", p_data->response_data.att_value.handle);
 
     ifxv_client_notification(p_data);
 }

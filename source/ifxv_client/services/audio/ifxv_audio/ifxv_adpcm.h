@@ -33,7 +33,8 @@
 
 /** @file
  */
-#pragma once
+#ifndef IFXV_ADPCM_H__
+#define IFXV_ADPCM_H__
 
 #include "adpcm.h"
 
@@ -44,3 +45,5 @@
 
 void ifxv_adpcm_data( uint8_t * p_frame,  uint16_t len );
 void ifxv_adpcm_init();
+
+#endif // IFXV_ADPCM_H__

@@ -50,17 +50,16 @@
 #endif
 
 #ifdef INCLUDE_ATV
- #define NUMBER_OF_SUPPORTED_SERVER 4
+ #define NUMBER_OF_SUPPORTED_SERVER 5
 #else
- #define NUMBER_OF_SUPPORTED_SERVER 3
+ #define NUMBER_OF_SUPPORTED_SERVER 4
 #endif
-#define MAX_SUPPORTED_CHAR 16
+#define MAX_SUPPORTED_CHAR 32
 #define FIRST_HANDLE 1
 #define LAST_HANDLE  0xffff
 #define found_service(s) (s->s_handle && s->e_handle)
 #define handle_in_service_range(s, h) ((h >= s->s_handle) && (h <= s->e_handle))
 #define characteristic_in_service_range(s, i) ((i<server.char_cnt) && handle_in_service_range(s, server.characteristics[i].chr.handle))
-#define discovery_start() ifxv_discovery(0)
 #define LED_DISCOVERY_BLINK_SPEED 100
 
 typedef struct
@@ -79,9 +78,9 @@ typedef struct
  *                Variables
  ******************************************************/
 #ifdef INCLUDE_ATV
-static discovery_t server = {{&audio_ifxv, &audio_atv, &battery, &hid}};
+static discovery_t server = {{&audio_ifxv, &audio_atv, &hid, &battery, &findme}};
 #else
-static discovery_t server = {{&audio_ifxv, &battery, &hid}};
+static discovery_t server = {{&audio_ifxv, &hid, &battery, &findme}};
 #endif
 /******************************************************
  *                Functions
@@ -275,8 +274,10 @@ static wiced_bt_gatt_status_t discovery_handle_descriptor_result(wiced_bt_gatt_c
  */
 static wiced_bool_t discovery_characteristics_detail(wiced_bt_gatt_group_value_t * service, wiced_bt_gatt_discovery_type_t type)
 {
+    IFXV_DISC_TRACE2("**** Discover detail, type=%d, handle: 0x%04X-0x%04X\n", type, service->s_handle, service->e_handle);
     switch (type) {
     case GATT_DISCOVER_SERVICES_BY_UUID:
+        IFXV_DISC_TRACE2("GATT_DISCOVER_SERVICES_BY_UUID\n");
         if (service->s_handle && service->e_handle)
         {
             IFXV_DISC_TRACE("**** Discover characteristics handle: 0x%04X-0x%04X\n", service->s_handle, service->e_handle);
@@ -286,8 +287,9 @@ static wiced_bool_t discovery_characteristics_detail(wiced_bt_gatt_group_value_t
         return TRUE;
 
     case GATT_DISCOVER_CHARACTERISTICS:
+        IFXV_DISC_TRACE2("GATT_DISCOVER_CHARACTERISTICS\n");
         {
-            IFXV_DISC_TRACE2("Discover characteristics complete\n");
+            IFXV_DISC_TRACE("Discover characteristics complete\n");
             // get ready to find descriptors, first, we find out the first characteristic for this service.
             int i;
             for (i=0; i<server.char_cnt; i++)
@@ -309,8 +311,10 @@ static wiced_bool_t discovery_characteristics_detail(wiced_bt_gatt_group_value_t
         // after fall through, the index will be incremented by 1, declement it first so it won't be changed.
         server.char_index--;
         // fallthrough
+        IFXV_DISC_TRACE2("Fall Through!!\n");
 
     case GATT_DISCOVER_CHARACTERISTIC_DESCRIPTORS:
+        IFXV_DISC_TRACE2("GATT_DISCOVER_CHARACTERISTIC_DESCRIPTORS\n");
         while (TRUE)
         {
             // find descriptor for the next characteristics
@@ -382,6 +386,7 @@ static wiced_bool_t discovery_characteristics_detail(wiced_bt_gatt_group_value_t
         }
 
     default:
+        IFXV_DISC_TRACE("not handled\n");
         return TRUE;
     }
 }
@@ -510,11 +515,10 @@ wiced_bt_gatt_status_t discovery_complete(wiced_bt_gatt_discovery_complete_t* p_
 void discovery_link_up(uint16_t conn_id)
 {
     server.conn_id = conn_id;
-
     led_blink(LINK_LED, 0, LED_DISCOVERY_BLINK_SPEED);
     hci_send_status(HCI_CONTROL_IFXV_STATUS_DISCOVERY);
     WICED_BT_TRACE("Start service discovery...\n");
-    discovery_start();
+    ifxv_discovery(0);
 }
 
 /*

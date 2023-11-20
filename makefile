@@ -35,6 +35,15 @@ ifeq ($(WHICHFILE),true)
 $(info Processing $(lastword $(MAKEFILE_LIST)))
 endif
 
+$(info !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!)
+$(info !!!!!!!!                 WARNING                     !!!!!!!!!!!!!!!!)
+$(info This sample application demonstrates a custom GATT service with)
+$(info 16-bit service UUID 0x0000.  This is not a valid service ID and must)
+$(info not be used in a product. Valid 16-bit service UUID must be purchased)
+$(info from the Bluetooth SIG and code must be updated with the valid UUID.)
+$(info See application README.md for more details.)
+$(info !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!)
+
 #
 # Basic Configuration
 #
@@ -83,9 +92,10 @@ CY_APP_DEFINES+=-DENABLE_DEBUG=1
 endif
 
 CY_APP_DEFINES+=\
+    -DLE_LOCAL_PRIVACY_SUPPORT \
     -DWICED_BT_TRACE_ENABLE \
 
-#Enable Below Macro to get HCI Traces
+#Enable Below Macro to get HCI Traces for BTSpy
 #CY_APP_DEFINES+=-DENABLE_HCI_TRACE
 
 #

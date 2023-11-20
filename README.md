@@ -4,6 +4,14 @@
 
 The IFX-Voice LE Host application is used to support the IFX-Voice LE Remote Control sample application to demonstrate audio capabilities using Infineon Voice over GATT Profile (VoGP) protocol. The Client Control host PC application is used to control the application and audio playback.
 
+## WARNING: Sample 16-bit service UUID not for production use
+This application demonstrates the use of a custom GATT service using 16-bit service UUID 0x0000. This is not a valid service UUID and **MUST NOT BE USED IN A SHIPPING PRODUCT**. To use this code in a shipping product, users must purchase a valid 16-bit service UUID from the Bluetooth&#174; SIG, see https://support.bluetooth.com/hc/en-us/articles/360062030092-Requesting-Assigned-Numbers
+
+When a valid 16-bit service UUID is obtained, the source code in this Host application must be modified to use it, change:
+`source/ifxv_client/services/audio/ifxv_audio/ifxv_audio.c: #define IFXV_UUID 0x0000`
+
+The IFX-Voice LE Remote Control sample used in conjunction with this sample must also be modified to match the valid service UUID.
+
 ## Codec Supported
 
 - ADPCM
@@ -69,6 +77,14 @@ After service discovery completes, both host and remote's LED turns solid on to 
    This is similar to audio testing initiated from ifxv-remote, except it is initiated from the host. Releasing the button stops audio streaming. See README.md in ifxv-remote for more detail about audio testing.
 
    ![Image](./images/host-record.png)
+
+2. Initiate live audio streaming from host user button.
+
+   While link is connected, the user button can be used to initiate audio streaming. Press and hold for audio streaming. Releasing the button will stop audio.
+
+## Erase pairing information
+
+   While link is disconnected, press and hold the button for 5 seconds will erase the bonded devices from the NVRAM and enter pairing for new devices.
 
 ## BTSTACK version
 

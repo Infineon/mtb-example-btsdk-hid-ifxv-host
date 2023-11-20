@@ -33,7 +33,8 @@
 
 /** @file
  */
-#pragma once
+#ifndef DISCOVERY_H__
+#define DISCOVERY_H__
 
 #include "ifxv_audio.h"
 #include "service.h"
@@ -52,3 +53,5 @@ charstc_t * discovery_characteristic(uint8_t index);
 wiced_bt_gatt_status_t discovery_result(wiced_bt_gatt_discovery_result_t * p_data);
 wiced_bt_gatt_status_t discovery_complete(wiced_bt_gatt_discovery_complete_t * p_data);
 wiced_bool_t discovery_custom_notification(wiced_bt_gatt_operation_complete_t * p_data);
+
+#endif // DISCOVERY_H__

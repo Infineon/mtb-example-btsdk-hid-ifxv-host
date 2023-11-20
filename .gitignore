@@ -3,6 +3,7 @@ bt_spy.pro.user.*
 bt_spy.pro.user
 
 library-manager.log
+deps/locking_commit.log
 
 # recursively ignore build folders in the tree
 build/

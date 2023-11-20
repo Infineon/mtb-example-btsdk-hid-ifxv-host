@@ -33,7 +33,8 @@
 
 /** @file
  */
-#pragma once
+#ifndef IFXV_AUDIO_H__
+#define IFXV_AUDIO_H__
 
 #include "audio_defs.h"
 #include "service_defs.h"
@@ -57,3 +58,5 @@ void ifxv_audio_start_req(audio_cfg_t * cfg);
 
 server_info_t * ifxv_audio_device_cap();
 server_info_t * ifxv_audio_host_cap();
+
+#endif // IFXV_AUDIO_H__

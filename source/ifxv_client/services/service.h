@@ -33,10 +33,12 @@
 
 /** @file
  */
-#pragma once
+#ifndef SERVICE_H__
+#define SERVICE_H__
 
 #include "audio.h"
 #include "battery.h"
+#include "findme.h"
 #include "hid.h"
 #include "op_queue.h"
 
@@ -45,3 +47,5 @@ wiced_bool_t service_char_found(service_t * service, uint8_t index);
 wiced_bool_t service_all_char_found(service_t * service);
 wiced_bool_t service_cback(service_t * service, wiced_bt_gatt_data_t * gatt_data_p);
 void         service_down(service_t * service);
+
+#endif // SERVICE_H__

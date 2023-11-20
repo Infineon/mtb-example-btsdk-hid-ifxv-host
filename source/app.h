@@ -34,7 +34,8 @@
 /** @file
  *
  */
-#pragma once
+#ifndef APP_H__
+#define APP_H__
 
 #include "wiced_bt_types.h"
 #include "wiced_bt_cfg.h"
@@ -82,6 +83,9 @@ void app_process_read_rsp(wiced_bt_gatt_operation_complete_t *p_data);
 void app_indication_handler(wiced_bt_gatt_operation_complete_t *p_data);
 void app_notification_handler(wiced_bt_gatt_operation_complete_t *p_data);
 void app_enter_pairing();
+void app_erase_bonding();
 wiced_bool_t app_save_link_keys( wiced_bt_device_link_keys_t *p_keys );
 wiced_bool_t app_read_link_keys(wiced_bt_device_link_keys_t *p_keys);
 wiced_bool_t app_is_device_bonded(wiced_bt_device_address_t bd_address);
+
+#endif // APP_H__

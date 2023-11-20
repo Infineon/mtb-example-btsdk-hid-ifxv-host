@@ -187,7 +187,6 @@ void ifxv_client_link_up(wiced_bt_gatt_connection_status_t *p_conn_status)
     // Save the peer info
     ifxv.peer.conn_id       = p_conn_status->conn_id;
     ifxv.peer.addr_type     = p_conn_status->addr_type;
-    ifxv.peer.conn_id       = p_conn_status->conn_id;
     ifxv.peer.role          = dev_role;
     ifxv.peer.transport     = p_conn_status->transport;
     memcpy(ifxv.peer.peer_addr, p_conn_status->bd_addr, BD_ADDR_LEN);

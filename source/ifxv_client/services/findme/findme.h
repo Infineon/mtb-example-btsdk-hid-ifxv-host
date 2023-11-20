@@ -33,28 +33,14 @@
 
 /** @file
  */
-#ifndef IFXV_OPUS_H__
-#define IFXV_OPUS_H__
+#ifndef FINDME_H__
+#define FINDME_H__
 
-#include "codec_opus.h"
+#include "service.h"
 
-// In OPUS, we use 320 16-bit samples per transaction.
-#define OPUS_ENC_OFFSET         2
-#define OPUS_HEADER_SIZE        10
-#define OPUS_ENCODE_BUF_SIZE    (OPUS_HEADER_SIZE+OPUS_ENC_PACKET_SIZE)
+extern service_t findme;
 
-// FRAME FORMAT
-//--------------- 2-byte IFXV Header
-// uint8_t seq
-// uint8_t channel
-//----------------            <--- pass this offset to CELT decoder
-// uint32_t len                    big-endian
-// uint32_t enc_final_range        big-endian
-// ---------------            <--- HEADER SIZE 10
-// uint8_t [OPUS_MAX_DATA_SIZE]    CELT data (max 80 variable length)
-//
+wiced_bt_gatt_status_t findme_set_alert_level(uint8_t level);
+wiced_result_t findme_cmd(uint8_t * p_data, uint16_t len);
 
-void ifxv_opus_data( uint8_t * p_frame,  uint16_t len );
-void ifxv_opus_init();
-
-#endif // IFXV_OPUS_H__
+#endif // FINDME_H__

@@ -72,28 +72,28 @@ const wiced_bt_cfg_settings_t wiced_bt_cfg_settings =
 
     .ble_scan_cfg =                                                 /* LE scan settings  */
     {
-        .scan_mode                       = BTM_BLE_SCAN_MODE_ACTIVE,                                   /**< LE scan mode (BTM_BLE_SCAN_MODE_PASSIVE, BTM_BLE_SCAN_MODE_ACTIVE, or BTM_BLE_SCAN_MODE_NONE) */
+        .scan_mode                       = BTM_BLE_SCAN_MODE_PASSIVE,                                   /**< LE scan mode (BTM_BLE_SCAN_MODE_PASSIVE, BTM_BLE_SCAN_MODE_ACTIVE, or BTM_BLE_SCAN_MODE_NONE) */
 
         /* Advertisement scan configuration */
         .high_duty_scan_interval         = WICED_BT_CFG_DEFAULT_HIGH_DUTY_SCAN_INTERVAL,               /**< High duty scan interval */
         .high_duty_scan_window           = WICED_BT_CFG_DEFAULT_HIGH_DUTY_SCAN_WINDOW,                 /**< High duty scan window */
-        .high_duty_scan_duration         = 5,                                                          /**< High duty scan duration in seconds (0 for infinite) */
+        .high_duty_scan_duration         = 30,                                                         /**< High duty scan duration in seconds (0 for infinite) */
 
-        .low_duty_scan_interval          = WICED_BT_CFG_DEFAULT_LOW_DUTY_SCAN_INTERVAL,                /**< Low duty scan interval  */
-        .low_duty_scan_window            = WICED_BT_CFG_DEFAULT_LOW_DUTY_SCAN_WINDOW,                  /**< Low duty scan window */
-        .low_duty_scan_duration          = 85,                                                         /**< Low duty scan duration in seconds (0 for infinite) */
+        .low_duty_scan_interval          = 256,                                                        /**< Low duty scan interval  */
+        .low_duty_scan_window            = 48,                                                         /**< Low duty scan window */
+        .low_duty_scan_duration          = 60,                                                         /**< Low duty scan duration in seconds (0 for infinite) */
 
         /* Connection scan configuration */
         .high_duty_conn_scan_interval    = WICED_BT_CFG_DEFAULT_HIGH_DUTY_CONN_SCAN_INTERVAL,          /**< High duty cycle connection scan interval */
         .high_duty_conn_scan_window      = WICED_BT_CFG_DEFAULT_HIGH_DUTY_CONN_SCAN_WINDOW,            /**< High duty cycle connection scan window */
         .high_duty_conn_duration         = 30,                                                         /**< High duty cycle connection duration in seconds (0 for infinite) */
 
-        .low_duty_conn_scan_interval     = WICED_BT_CFG_DEFAULT_LOW_DUTY_CONN_SCAN_INTERVAL,           /**< Low duty cycle connection scan interval */
-        .low_duty_conn_scan_window       = WICED_BT_CFG_DEFAULT_LOW_DUTY_CONN_SCAN_WINDOW,             /**< Low duty cycle connection scan window */
-        .low_duty_conn_duration          = 30,                                                         /**< Low duty cycle connection duration in seconds (0 for infinite) */
+        .low_duty_conn_scan_interval     = 256,                                                        /**< Low duty cycle connection scan interval */
+        .low_duty_conn_scan_window       = 48,                                                         /**< Low duty cycle connection scan window */
+        .low_duty_conn_duration          = 60,                                                         /**< Low duty cycle connection duration in seconds (0 for infinite) */
 
         /* Connection configuration */
-        .conn_min_interval               = 112,                                                        /**< Minimum connection interval */
+        .conn_min_interval               = 6,                                                        /**< Minimum connection interval */
         .conn_max_interval               = 128,                                                        /**< Maximum connection interval */
         .conn_latency                    = WICED_BT_CFG_DEFAULT_CONN_LATENCY,                          /**< Connection latency */
         .conn_supervision_timeout        = WICED_BT_CFG_DEFAULT_CONN_SUPERVISION_TIMEOUT,              /**< Connection link supervision timeout */
@@ -109,8 +109,8 @@ const wiced_bt_cfg_settings_t wiced_bt_cfg_settings =
         .high_duty_max_interval          = WICED_BT_CFG_DEFAULT_HIGH_DUTY_ADV_MAX_INTERVAL,            /**< High duty undirected connectable maximum advertising interval */
         .high_duty_duration              = 10,                                                         /**< High duty undirected connectable advertising duration in seconds (0 for infinite) */
 
-        .low_duty_min_interval           = 1024,                                                       /**< Low duty undirected connectable minimum advertising interval */
-        .low_duty_max_interval           = 1024,                                                       /**< Low duty undirected connectable maximum advertising interval */
+        .low_duty_min_interval           = WICED_BT_CFG_DEFAULT_LOW_DUTY_ADV_MIN_INTERVAL,             /**< Low duty undirected connectable minimum advertising interval */
+        .low_duty_max_interval           = WICED_BT_CFG_DEFAULT_LOW_DUTY_ADV_MIN_INTERVAL,             /**< Low duty undirected connectable maximum advertising interval */
         .low_duty_duration               = 0,                                                          /**< Low duty undirected connectable advertising duration in seconds (0 for infinite) */
 
         .high_duty_directed_min_interval = WICED_BT_CFG_DEFAULT_HIGH_DUTY_DIRECTED_ADV_MIN_INTERVAL,   /**< High duty directed connectable minimum advertising interval */
@@ -179,7 +179,11 @@ const wiced_bt_cfg_settings_t wiced_bt_cfg_settings =
     .max_number_of_buffer_pools         = 4,                                                           /**< Maximum number of buffer pools in p_btm_cfg_buf_pools and by wiced_create_pool */
 
     /* Interval of  random address refreshing */
-    .rpa_refresh_timeout                = WICED_BT_CFG_DEFAULT_RANDOM_ADDRESS_CHANGE_TIMEOUT,          /**< Interval of  random address refreshing - secs */
+#if defined(LE_LOCAL_PRIVACY_SUPPORT)
+    .rpa_refresh_timeout                = WICED_BT_CFG_DEFAULT_RANDOM_ADDRESS_CHANGE_TIMEOUT,/**< Interval of  random address refreshing - secs */
+#else
+    .rpa_refresh_timeout                = WICED_BT_CFG_DEFAULT_RANDOM_ADDRESS_NEVER_CHANGE,  /**< Use public address */
+#endif
     /* LE Filter Accept List size */
     .ble_filter_accept_list_size                = 0,                                                           /**< Maximum number of Filter Accept List devices allowed. Cannot be more than 128 */
 

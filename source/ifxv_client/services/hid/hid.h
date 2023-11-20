@@ -33,8 +33,11 @@
 
 /** @file
  */
-#pragma once
+#ifndef HID_H__
+#define HID_H__
 
 #include "service.h"
 
 extern service_t hid;
+
+#endif // HID_H__

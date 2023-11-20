@@ -33,7 +33,8 @@
 
 /** @file
  */
-#pragma once
+#ifndef AUDIO_H__
+#define AUDIO_H__
 
 #include "ifxv_audio.h"
 #ifdef INCLUDE_ATV
@@ -66,3 +67,5 @@ void audio_init();
 audio_cfg_t * audio_get_cfg();
 uint8_t audio_profile();
 void audio_default_cfg(server_info_t * host, server_info_t * dev);
+
+#endif // AUDIO_H__

@@ -45,6 +45,11 @@
 /******************************************************************************
  *                                Constants
  ******************************************************************************/
+enum {
+    CUSTOM_CMD_FINDME,
+    MAX_CUSTOM_CMD
+};
+
 typedef struct
 {
     uint8_t         profile;
@@ -83,6 +88,30 @@ static void hci_send_capability(uint16_t code, uint8_t profile, server_info_t * 
     else
     {
         wiced_transport_send_data(code, NULL, 0);
+    }
+}
+
+static void hci_handle_custom_command(uint8_t *p_data, uint32_t length )
+{
+    if (length)
+    {
+        uint8_t group = *p_data++;
+        length--;
+
+        switch (group) {
+        case CUSTOM_CMD_FINDME:
+            IFXV_HCI_TRACE("Findme custom cmd, data length=%d\n", length);
+            findme_cmd(p_data, length);
+            break;
+
+        default:
+            IFXV_HCI_TRACE("Undefined custom group:0x%02x, data length=%d\n", group, length);
+            break;
+        }
+    }
+    else
+    {
+        WICED_BT_TRACE("Invalid custom cmd parameter\n");
     }
 }
 
@@ -257,6 +286,10 @@ uint32_t hci_rx_cmd( uint8_t *p_buffer, uint32_t length )
             case HCI_CONTROL_IFXVH_COMMAND_CONNECT:
                 IFXV_HCI_TRACE("HCI_CONTROL_IFXVH_COMMAND_CONNECT\n");
                 app_enter_pairing();
+                break;
+
+            case HCI_CONTROL_IFXVH_COMMAND_CUSTOM_DEFINED:
+                hci_handle_custom_command(p_data, payload_len);
                 break;
 
             default:

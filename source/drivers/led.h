@@ -40,7 +40,9 @@
 * Functions:
 *
 *******************************************************************************/
-#pragma once
+#ifndef LED_H__
+#define LED_H__
+
 #include "wiced_platform.h"
 
 // Use first defined LED for HIDD code indicator
@@ -167,3 +169,6 @@ enum {
  *
  *******************************************************************************/
  void led_blink_stop(uint8_t idx);
+
+
+#endif // LED_H__

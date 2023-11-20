@@ -38,11 +38,43 @@
 #include "wiced_memory.h"
 #include "app.h"
 
-#if TRACE_GATT == 1
+#if GATT_TRACE
  #define     APP_GATT_TRACE   WICED_BT_TRACE
+ #if GATT_TRACE > 1
+  #define    APP_GATT_TRACE2   WICED_BT_TRACE
+ #else
+  #define    APP_GATT_TRACE2(...)
+ #endif
 #else
  #define     APP_GATT_TRACE(...)
+ #define     APP_GATT_TRACE2(...)
 #endif
+
+#if GATT_TRACE > 1
+#define STR(x) #x
+static const char* eventStr[] =
+{
+    STR(GATT_CONNECTION_STATUS_EVT),        /**< GATT connection status change. Event data: #wiced_bt_gatt_connection_status_t */
+    STR(GATT_OPERATION_CPLT_EVT),           /**< GATT client events. Event data: #wiced_bt_gatt_event_data_t */
+    STR(GATT_DISCOVERY_RESULT_EVT),         /**< GATT attribute discovery result. Event data: #wiced_bt_gatt_discovery_result_t */
+    STR(GATT_DISCOVERY_CPLT_EVT),           /**< GATT attribute discovery complete. Event data: #wiced_bt_gatt_event_data_t */
+    STR(GATT_ATTRIBUTE_REQUEST_EVT),        /**< GATT attribute request (from remote client). Event data: #wiced_bt_gatt_attribute_request_t */
+    STR(GATT_CONGESTION_EVT),               /**< GATT congestion (running low in tx buffers). Event data: #wiced_bt_gatt_congestion_event_t TODO: add more details regarding congestion */
+    STR(GATT_GET_RESPONSE_BUFFER_EVT),      /**< GATT buffer request, typically sized to max of bearer mtu - 1 */
+    STR(GATT_APP_BUFFER_TRANSMITTED_EVT),   /**< GATT buffer transmitted event,  check \ref wiced_bt_gatt_buffer_transmitted_t*/
+};
+
+/****************************************************/
+const char* getGattEventStr(wiced_bt_management_evt_t event)
+{
+    if (event >= sizeof(eventStr) / sizeof(uint8_t*))
+    {
+        return "** UNKNOWN **";
+    }
+
+    return eventStr[event];
+}
+#endif // GATT_TRACE
 
 /*
  * This function sends write to the peer GATT server
@@ -121,6 +153,8 @@ wiced_bt_gatt_status_t app_gatt_callback( wiced_bt_gatt_evt_t event, wiced_bt_ga
 {
     wiced_bt_gatt_status_t result = WICED_BT_GATT_INVALID_PDU;
 
+    APP_GATT_TRACE2("*** %s (%d)\n", getGattEventStr(event), event);
+
     switch(event)
     {
         case GATT_CONNECTION_STATUS_EVT:
@@ -128,17 +162,14 @@ wiced_bt_gatt_status_t app_gatt_callback( wiced_bt_gatt_evt_t event, wiced_bt_ga
             break;
 
         case GATT_DISCOVERY_RESULT_EVT:
-            APP_GATT_TRACE("*** discovery result event\n");
             result = app_gatt_discovery_result(&p_data->discovery_result);
             break;
 
         case GATT_DISCOVERY_CPLT_EVT:
-            APP_GATT_TRACE("*** discovery complete event\n");
             result = app_gatt_discovery_complete(&p_data->discovery_complete);
             break;
 
         case GATT_OPERATION_CPLT_EVT:
-            APP_GATT_TRACE("*** operation complete event\n");
             result = app_gatt_operation_complete(&p_data->operation_complete);
             break;
 

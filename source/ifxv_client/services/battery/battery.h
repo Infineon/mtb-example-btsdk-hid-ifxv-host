@@ -33,8 +33,11 @@
 
 /** @file
  */
-#pragma once
+#ifndef BATTERY_H__
+#define BATTERY_H__
 
 #include "service.h"
 
 extern service_t battery;
+
+#endif // BATTERY_H__

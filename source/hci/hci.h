@@ -33,8 +33,8 @@
 
 /** @file
 */
-
-#pragma once
+#ifndef HCI_H__
+#define HCI_H__
 
 #include "wiced_bt_dev.h"
 #include "wiced_transport.h"
@@ -57,3 +57,4 @@ void hci_send_disconnect_evt( uint8_t reason, uint16_t con_handle );
 void hci_send_connect_evt( uint8_t addr_type, BD_ADDR addr, uint16_t con_handle, uint8_t role );
 void hci_send_pairing_complete_evt( uint8_t result, uint8_t *p_bda, uint8_t type );
 
+#endif // HCI_H__

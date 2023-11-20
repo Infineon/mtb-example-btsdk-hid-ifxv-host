@@ -48,5 +48,7 @@ typedef void (*app_init_t)();
 
 wiced_result_t bt_init(app_init_t);
 wiced_result_t bt_stack_init(wiced_bt_management_cback_t cb);
+wiced_bt_device_address_t * bt_loc_addr();
+wiced_bt_ble_address_type_t bt_loc_addr_type();
 
 #endif // _BT_H_

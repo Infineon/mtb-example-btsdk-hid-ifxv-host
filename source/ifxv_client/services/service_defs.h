@@ -33,7 +33,8 @@
 
 /** @file
  */
-#pragma once
+#ifndef SERVICE_DEFS_H__
+#define SERVICE_DEFS_H__
 
 #include "wiced_bt_gatt.h"
 
@@ -72,3 +73,5 @@ typedef struct
 #pragma pack()
 
 #define UNDEFINED_CHAR_INDEX 0xff
+
+#endif // SERVICE_DEFS_H__

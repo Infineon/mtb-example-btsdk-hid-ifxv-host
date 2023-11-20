@@ -34,7 +34,8 @@
 /** @file
  *
  */
-#pragma once
+#ifndef CODEC_OPUS_H__
+#define CODEC_OPUS_H__
 
 #include "wiced_bt_types.h"
 
@@ -62,3 +63,5 @@ typedef enum
 void     opus_init();
 uint16_t opus_encode(int16_t * p_pcm, uint16_t sample_cnt, uint8_t * p_opus);                   // returns opus encoded data length
 uint16_t opus_decode(uint8_t * p_opus_enc_data, uint16_t opus_enc_data_len, int16_t * p_pcm);   // returns sample cnt
+
+#endif // CODEC_OPUS_H__

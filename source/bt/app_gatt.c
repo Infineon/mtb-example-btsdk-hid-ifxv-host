@@ -39,7 +39,7 @@
 #include "wiced_bt_gatt.h"
 #include "wiced_bt_trace.h"
 
-#if TRACE_GATT == 1
+#if GATT_TRACE
  #define     APP_GATT_TRACE   WICED_BT_TRACE
 #else
  #define     APP_GATT_TRACE(...)

@@ -33,7 +33,8 @@
 
 /** @file
  */
-#pragma once
+#ifndef OP_QUEUE_H__
+#define OP_QUEUE_H__
 
 #include "wiced_bt_types.h"
 
@@ -49,3 +50,5 @@ wiced_bt_gatt_status_t ifxv_op(uint8_t op, uint16_t handle, uint16_t data16, voi
 #define ifxv_op_set_cfg(handle, data16)     ifxv_op(IFXV_OP_SET_CONFIG, handle, data16, NULL, 0)
 #define ifxv_op_write(handle, p_data, len)  ifxv_op(IFXV_OP_WRITE, handle, 0, p_data, (uint8_t) len)
 #define ifxv_op_read(handle)                ifxv_op(IFXV_OP_READ, handle, 0, NULL, 0)
+
+#endif // OP_QUEUE_H__
