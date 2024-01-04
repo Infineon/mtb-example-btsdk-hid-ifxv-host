@@ -50,6 +50,10 @@
 #include "hci.h"
 #include "ifxv_client.h"
 #include "bt.h"
+#include "findme.h"
+#include "battery.h"
+#include "hid.h"
+#include "op_queue.h"
 
 /******************************************************************************
  *  defines

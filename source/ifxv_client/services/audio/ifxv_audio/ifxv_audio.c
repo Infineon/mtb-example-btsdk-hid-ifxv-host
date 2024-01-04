@@ -201,7 +201,7 @@ static ifxv_audio_t ifxv = {0};
  */
 static void stop_timer(uint8_t state)
 {
-    if (&ifxv.duration_timer)
+    if (wiced_is_timer_in_use(&ifxv.duration_timer))
     {
         wiced_stop_timer(&ifxv.duration_timer);
     }

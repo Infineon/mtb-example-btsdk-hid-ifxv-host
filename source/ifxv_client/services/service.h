@@ -36,11 +36,7 @@
 #ifndef SERVICE_H__
 #define SERVICE_H__
 
-#include "audio.h"
-#include "battery.h"
-#include "findme.h"
-#include "hid.h"
-#include "op_queue.h"
+#include "service_defs.h"
 
 wiced_bool_t service_found(service_t * service);
 wiced_bool_t service_char_found(service_t * service, uint8_t index);
